@@ -1,0 +1,111 @@
+# CIRCADIA - A Python-Based Student Sleep Monitoring System
+# "Track Better, Sleep Smarter"
+
+minutes_per_hour = 60
+hours_per_day    = 24
+minutes_per_day  = hours_per_day * minutes_per_hour
+
+
+# ---------- INPUT HELPERS ----------
+
+def GetInteger(prompt):
+    while True:
+        raw = input(prompt).strip()
+        if not raw.isdigit():
+            print("Invalid input! Please enter an integer.")
+        else:
+            return int(raw)
+
+
+def GetAge():
+    return GetInteger("Enter your age in years: ")
+
+
+def GetHour(label):
+    while True:
+        hour = GetInteger(f"Enter {label} hour (1-12): ")
+        if 1 <= hour <= 12:
+            return hour
+        print("Hour must be from 1 to 12.")
+
+
+def GetMinute(label):
+    while True:
+        minute = GetInteger(f"Enter {label} minute (0-59): ")
+        if 0 <= minute <= 59:
+            return minute
+        print("Minute must be from 0 to 59.")
+
+
+def GetAmPm(prompt):
+    while True:
+        period = input(prompt).strip().upper()
+        if period in ["AM", "PM"]:
+            return period
+        print("Invalid input! Please enter AM or PM.")
+
+
+# ---------- TIME CONVERSION ----------
+
+def GetTimeInMinutes(label):
+    period = GetAmPm(f"\nEnter {label} time period (AM/PM): ")
+    hour   = GetHour(label)
+    minute = GetMinute(label)
+
+    if period == "AM":
+        hour_24 = 0 if hour == 12 else hour
+    else:
+        hour_24 = 12 if hour == 12 else hour + 12
+
+    return hour_24 * 60 + minute
+
+
+# ---------- CALCULATION ----------
+
+def CalculateSleepDuration(sleep_time, wake_time):
+    if wake_time < sleep_time:
+        wake_time += minutes_per_day
+    return wake_time - sleep_time
+
+
+def RecommendSleep(age):
+    if age <= 12:
+        return (9, 12)
+    elif age <= 18:
+        return (8, 10)
+    else:
+        return (7, 9)
+
+
+# ---------- MAIN PROGRAM ----------
+
+def main():
+    print("=== CIRCADIA: Sleep Tracker ===\n")
+
+    age = GetAge()
+
+    sleep_time = GetTimeInMinutes("sleep")
+    wake_time  = GetTimeInMinutes("wake-up")
+
+    duration = CalculateSleepDuration(sleep_time, wake_time)
+
+    hours   = duration // 60
+    minutes = duration % 60
+
+    print(f"\nYou slept for {hours} hours and {minutes} minutes.")
+
+    # Recommendation
+    min_sleep, max_sleep = RecommendSleep(age)
+    print(f"Recommended sleep: {min_sleep}-{max_sleep} hours")
+
+    # Feedback
+    if hours < min_sleep:
+        print("You need more sleep.")
+    elif hours > max_sleep:
+        print("You may be oversleeping.")
+    else:
+        print("Your sleep is within the recommended range.")
+
+
+# Run program
+main()
