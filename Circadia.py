@@ -1,0 +1,214 @@
+# CIRCADIA - A Python-Based Student Sleep Monitoring System
+# "Track Better, Sleep Smarter"
+# Authors : Travis Julian P. Fuentes
+#           Emmbert Matthieu O. Cebrian
+#           Markellus Jhames D. Chu
+# Section : Grade 7 - Turquoise
+# Sleep hour ranges are based on the American Academy of Sleep Medicine (AASM)
+
+# We store these as variables so we can reuse them without
+# typing the same numbers over and over throughout the program.
+minutes_per_hour = 60
+minutes_per_day  = 24 * minutes_per_hour
+
+
+# FUNCTION: CheckDigits
+# We need this because input() always gives us text, even if the
+# user types a number. This checks that every character is a digit
+# so we can safely convert it to an integer later.
+def CheckDigits(text):
+    for ch in text:
+        if ch < "0" or ch > "9":
+            return False  # Found a non-digit, so the input is invalid
+    return True           # All characters passed, so the input is a valid number
+
+
+# FUNCTION: GetAge
+# We use a separate function for age because unlike hours and minutes,
+# age has no upper limit. We only check that it is a valid whole number.
+def GetAge():
+    valid = False
+    age   = 0
+
+    while not valid:
+        raw = input("Enter your age in years: ")
+
+        if raw == "":
+            # Empty input means the user pressed Enter without typing anything
+            print("Invalid input! Please enter a whole number.")
+        elif not CheckDigits(raw):
+            # Non-digit characters means the user typed letters or symbols
+            print("Invalid input! Please enter a whole number.")
+        else:
+            age   = int(raw)
+            valid = True  # Any whole number is a valid age, so we accept it
+
+    return age
+
+
+# FUNCTION: GetInteger
+# We use this whenever we need a number from the user within a specific range.
+# It keeps asking until the user gives a valid number in the right range,
+# so the rest of the program never receives bad data.
+def GetInteger(prompt, min_value, max_value):
+    value = min_value - 1  # Start at an invalid value to enter the loop
+
+    while value < min_value or value > max_value:
+        raw = input(prompt)
+
+        if raw == "":
+            # Empty input means the user pressed Enter without typing anything
+            print("Invalid input! Please enter a whole number.")
+        elif not CheckDigits(raw):
+            # Non-digit characters means the user typed letters or symbols
+            print("Invalid input! Please enter a whole number.")
+        else:
+            value = int(raw)
+            if value < min_value or value > max_value:
+                # The number is valid but outside the allowed range
+                print("Value must be from " + str(min_value) + " to " + str(max_value) + ".")
+
+    return value
+
+
+# FUNCTION: GetAmPm
+# A clock time is incomplete without knowing if it is morning or evening,
+# so we ask for AM or PM separately and keep asking until it is correct.
+def GetAmPm(prompt):
+    period = ""
+
+    while period != "AM" and period != "PM":
+        period = input(prompt)
+        if period != "AM" and period != "PM":
+            print("Invalid input! Please enter AM or PM.")
+
+    return period
+
+
+# FUNCTION: GetTimeInMinutes
+# We convert the time to total minutes from midnight because it makes
+# subtraction easy. For example, 2:30 AM becomes 150 minutes, and
+# 10:00 PM becomes 1320 minutes, so we can simply subtract to get duration.
+def GetTimeInMinutes(label):
+    period = GetAmPm("\nEnter " + label + " time period (AM/PM): ")
+    hour   = GetInteger("Enter " + label + " hour (1-12): ", 1, 12)
+    minute = GetInteger("Enter " + label + " minute (0-59): ", 0, 59)
+
+    # We convert to 24-hour format first because it has no AM/PM ambiguity,
+    # which makes the math straightforward.
+    if period == "AM":
+        if hour == 12:
+            hour_24 = 0       # 12:xx AM is midnight, which is the start of the day
+        else:
+            hour_24 = hour
+    else:
+        if hour == 12:
+            hour_24 = 12      # 12:xx PM is noon, no change needed
+        else:
+            hour_24 = hour + 12
+
+    return hour_24 * minutes_per_hour + minute
+
+
+# FUNCTION: GetSleepRange
+# Different age groups need different amounts of sleep, so we look up
+# the recommended range for the user's age based on AASM guidelines.
+# We return both the minimum and maximum so we can check both sides.
+def GetSleepRange(age):
+    if age == 0:
+        return [12, 16]    # Infants need the most sleep for brain development
+    elif age <= 2:
+        return [11, 14]    # Toddlers still need a lot of sleep for growth
+    elif age <= 5:
+        return [10, 13]    # Preschool children need sleep for learning
+    elif age <= 12:
+        return [9, 12]     # School-age children need sleep to focus in class
+    elif age <= 18:
+        return [8, 10]     # Teenagers still need more sleep than adults
+    else:
+        return [7, 9]      # Adults need less sleep than children
+
+
+# FUNCTION: FormatDuration
+# We convert raw minutes into a readable sentence because printing
+# "150 minutes" is harder to understand than "2 hours and 30 minutes".
+def FormatDuration(total_minutes):
+    hours   = total_minutes // minutes_per_hour  # How many full hours
+    minutes = total_minutes  % minutes_per_hour  # Leftover minutes after the hours
+
+    # We check for singular vs plural so the grammar reads naturally
+    if hours == 1:
+        hour_part = "1 hour"
+    else:
+        hour_part = str(hours) + " hours"
+
+    if minutes == 1:
+        minute_part = "1 minute"
+    else:
+        minute_part = str(minutes) + " minutes"
+
+    # We only include the parts that are non-zero to keep the output clean
+    if hours == 0 and minutes == 0:
+        return "0 minutes"
+    elif hours == 0:
+        return minute_part
+    elif minutes == 0:
+        return hour_part
+    else:
+        return hour_part + " and " + minute_part
+
+
+# MAIN PROGRAM
+# This is where the program runs from top to bottom.
+# Each section follows the Input-Process-Output pattern.
+
+# Input: We greet the user by name to make the program feel personal
+first_name = input("Enter first name: ")
+last_name = input("Enter last name: ")
+print("\n----- PROGRAM START -----")
+print(f"Hello, {first_name} {last_name}!")
+
+# Input: We need the age to look up the correct sleep range later
+age = GetAge()
+
+# Process: Look up how much sleep this person should be getting
+sleep_range = GetSleepRange(age)
+min_minutes = sleep_range[0] * minutes_per_hour
+max_minutes = sleep_range[1] * minutes_per_hour
+
+# Input: Get the times the user slept and woke up
+sleep_total_minutes = GetTimeInMinutes("sleep")
+wake_total_minutes  = GetTimeInMinutes("wake-up")
+
+# Process: Subtract to find how long the person slept
+slept_minutes = wake_total_minutes - sleep_total_minutes
+
+# If the result is negative, the user slept before midnight and woke
+# up after midnight, so we add a full day to correct the calculation
+if slept_minutes < 0:
+    slept_minutes = slept_minutes + minutes_per_day
+
+# Process: Compare actual sleep to the recommended range to get the status
+if slept_minutes < min_minutes:
+    status_text = "Not Enough Sleep"
+elif slept_minutes > max_minutes:
+    status_text = "Too Much Sleep"
+else:
+    status_text = "Enough Sleep"
+
+# Output: Show the results to the user
+print("\n----- SLEEP DURATION ANALYSIS -----")
+print("Sleep Duration: " + FormatDuration(slept_minutes))
+print("Status: " + status_text)
+
+# Output: Give a helpful suggestion only when the sleep was not ideal
+if status_text == "Not Enough Sleep":
+    suggestion = min_minutes - slept_minutes
+    print("Suggestion: Try sleeping " + FormatDuration(suggestion) + " earlier.")
+elif status_text == "Too Much Sleep":
+    suggestion = slept_minutes - max_minutes
+    print("Suggestion: Try sleeping " + FormatDuration(suggestion) + " less.")
+
+print("\n")
+print("...Program finished with exit code 0")
+input("Press ENTER to exit console.")
